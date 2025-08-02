@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama serve & 
+       sleep 5 && 
+       ollama run mistral && 
+       tail -f /dev/null"
+
+  rag-llm-api:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ollama
+    volumes:
+      - ./uploads:/data/uploads
+      - ./vector_db:/data/vector_db
+    environment:
+      - OLLAMA_MODEL=mistral
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
